@@ -104,6 +104,9 @@ export 'src/util/parsers.dart';
 export 'src/util/serializable.dart';
 export 'src/util/uuid.dart';
 
+// Logger
+export 'package:amplify_logger/amplify_logger.dart';
+
 /// Top level singleton Amplify object.
 AmplifyClass get Amplify {
   return AmplifyClass.instance ??= AmplifyClass();
