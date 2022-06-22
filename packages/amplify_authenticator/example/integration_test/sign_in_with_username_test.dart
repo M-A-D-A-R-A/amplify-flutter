@@ -62,7 +62,8 @@ void main() {
     testWidgets('Sign in with unknown credentials', (tester) async {
       await loadAuthenticator(tester: tester, authenticator: authenticator);
       SignInPage signInPage = SignInPage(tester: tester);
-      signInPage.expectUsername();
+
+      await signInPage.expectUsername();
 
       // When I type my "username" with status "UNKNOWN"
       await signInPage.enterUsername('UNKNOWN');
@@ -88,9 +89,10 @@ void main() {
       );
       await loadAuthenticator(tester: tester, authenticator: authenticator);
       SignInPage signInPage = SignInPage(tester: tester);
-      signInPage.expectUsername();
+      
+      await signInPage.expectUsername();
 
-      // When I type my "username" with status "UNCONFIRMED"
+      // When I type my "username" 
       await signInPage.enterUsername(username);
 
       // And I type my password
@@ -101,8 +103,6 @@ void main() {
 
       /// Then I see "Sign out"
       await signInPage.expectAuthenticated();
-
-      await signInPage.submitSignOut();
     });
 
     // Scenario: Sign in with confirmed credentials then sign out
@@ -118,7 +118,8 @@ void main() {
       );
       await loadAuthenticator(tester: tester, authenticator: authenticator);
       SignInPage signInPage = SignInPage(tester: tester);
-      signInPage.expectUsername();
+
+      await signInPage.expectUsername();
 
       // When I type my "username" with status "UNKNOWN"
       await signInPage.enterUsername(username);
@@ -136,7 +137,7 @@ void main() {
       await signInPage.submitSignOut();
 
       // Then I see "Sign in"
-      signInPage.expectUsername();
+      await signInPage.expectUsername();
     });
 
     // Scenario: Sign in with force change password credentials
@@ -148,7 +149,8 @@ void main() {
       await loadAuthenticator(tester: tester, authenticator: authenticator);
       SignInPage signInPage = SignInPage(tester: tester);
       ConfirmSignInPage confirmSignInPage = ConfirmSignInPage(tester: tester);
-      signInPage.expectUsername();
+
+      await signInPage.expectUsername();
 
       // When I type my "username"
       await signInPage.enterUsername(username);
@@ -163,45 +165,47 @@ void main() {
       await confirmSignInPage.expectConfirmSignInNewPasswordIsPresent();
       confirmSignInPage.expectNewPasswordIsPresent();
     });
-  });
 
-  testWidgets(
-      'Sign in with confirmed credentials after a failed attempt with bad credentials',
-      (tester) async {
-    final username = generateUsername();
-    final password = generatePassword();
-    await adminCreateUser(
-      username,
-      password,
-      autoConfirm: true,
-      verifyAttributes: true,
-    );
-    await loadAuthenticator(tester: tester, authenticator: authenticator);
-    SignInPage signInPage = SignInPage(tester: tester);
-    signInPage.expectUsername();
 
-    // When I type my "username"
-    await signInPage.enterUsername('bad_username');
+    testWidgets(
+        'Sign in with confirmed credentials after a failed attempt with bad credentials',
+        (tester) async {
+      final username = generateUsername();
+      final password = generatePassword();
+      await adminCreateUser(
+        username,
+        password,
+        autoConfirm: true,
+        verifyAttributes: true,
+      );
+      await loadAuthenticator(tester: tester, authenticator: authenticator);
+      SignInPage signInPage = SignInPage(tester: tester);
+    
+      await signInPage.expectUsername();
 
-    // And I type my bad password
-    await signInPage.enterPassword(password);
+      // When I type my "username"
+      await signInPage.enterUsername('bad_username');
 
-    // And I click the "Sign in" button
-    await signInPage.submitSignIn();
+      // And I type my bad password
+      await signInPage.enterPassword(password);
 
-    /// Then I see UserNotFound exception banner
-    await signInPage.expectUserNotFound();
+      // And I click the "Sign in" button
+      await signInPage.submitSignIn();
 
-    // Then I type the correct username
-    await signInPage.enterUsername(username);
+      /// Then I see UserNotFound exception banner
+      await signInPage.expectUserNotFound();
 
-    // Then I type the correct password
-    await signInPage.enterPassword(password);
+      // Then I type the correct username
+      await signInPage.enterUsername(username);
 
-    // And I click the "Sign in" button
-    await signInPage.submitSignIn();
+      // Then I type the correct password
+      await signInPage.enterPassword(password);
 
-    // Then I am signed in
-    await signInPage.expectAuthenticated();
+      // And I click the "Sign in" button
+      await signInPage.submitSignIn();
+
+      // Then I am signed in
+      await signInPage.expectAuthenticated();
+    });
   });
 }

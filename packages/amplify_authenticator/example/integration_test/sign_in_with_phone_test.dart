@@ -108,7 +108,7 @@ void main() {
       SignInPage signInPage = SignInPage(tester: tester);
       ConfirmSignUpPage confirmSignUpPage = ConfirmSignUpPage(tester: tester);
 
-      signInPage.expectUsername(label: 'Phone Number');
+      await signInPage.expectUsername(label: 'Phone Number');
 
       // When I select my country code
       await signInPage.selectCountryCode();
@@ -143,7 +143,7 @@ void main() {
       );
       await loadAuthenticator(tester: tester, authenticator: authenticator);
       SignInPage signInPage = SignInPage(tester: tester);
-      signInPage.expectUsername(label: 'Phone Number');
+      await signInPage.expectUsername(label: 'Phone Number');
 
       // When I type my "username" with status "UNKNOWN"
       await signInPage.enterUsername(phoneNumber.withOutCountryCode());
@@ -161,7 +161,9 @@ void main() {
       await signInPage.submitSignOut();
 
       // Then I see "Sign in"
-      signInPage.expectUsername(label: 'Phone Number');
+      await signInPage.expectUsername(label: 'Phone Number');
+
+      await deleteUser(phoneNumber.toE164());
     });
 
     // Scenario: Sign in with force change password credentials
@@ -180,7 +182,7 @@ void main() {
       await loadAuthenticator(tester: tester, authenticator: authenticator);
       SignInPage signInPage = SignInPage(tester: tester);
       ConfirmSignInPage confirmSignInPage = ConfirmSignInPage(tester: tester);
-      signInPage.expectUsername(label: 'Phone Number');
+      await signInPage.expectUsername(label: 'Phone Number');
 
       // When I type my "username"
       await signInPage.enterUsername(phoneNumber.withOutCountryCode());
@@ -194,6 +196,8 @@ void main() {
       /// Then I see "Change Password"
       await confirmSignInPage.expectConfirmSignInNewPasswordIsPresent();
       confirmSignInPage.expectNewPasswordIsPresent();
+
+      await deleteUser(phoneNumber.toE164());
     });
   });
 }
