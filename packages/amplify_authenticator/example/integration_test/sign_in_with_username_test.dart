@@ -62,7 +62,6 @@ void main() {
     testWidgets('Sign in with unknown credentials', (tester) async {
       await loadAuthenticator(tester: tester, authenticator: authenticator);
       SignInPage signInPage = SignInPage(tester: tester);
-
       signInPage.expectUsername();
 
       // When I type my "username" with status "UNKNOWN"
@@ -89,10 +88,9 @@ void main() {
       );
       await loadAuthenticator(tester: tester, authenticator: authenticator);
       SignInPage signInPage = SignInPage(tester: tester);
-      
       signInPage.expectUsername();
 
-      // When I type my "username" 
+      // When I type my "username"
       await signInPage.enterUsername(username);
 
       // And I type my password
@@ -118,7 +116,6 @@ void main() {
       );
       await loadAuthenticator(tester: tester, authenticator: authenticator);
       SignInPage signInPage = SignInPage(tester: tester);
-
       signInPage.expectUsername();
 
       // When I type my "username" with status "UNKNOWN"
@@ -149,7 +146,6 @@ void main() {
       await loadAuthenticator(tester: tester, authenticator: authenticator);
       SignInPage signInPage = SignInPage(tester: tester);
       ConfirmSignInPage confirmSignInPage = ConfirmSignInPage(tester: tester);
-
       signInPage.expectUsername();
 
       // When I type my "username"
@@ -166,7 +162,6 @@ void main() {
       confirmSignInPage.expectNewPasswordIsPresent();
     });
 
-
     testWidgets(
         'Sign in with confirmed credentials after a failed attempt with bad credentials',
         (tester) async {
@@ -180,7 +175,7 @@ void main() {
       );
       await loadAuthenticator(tester: tester, authenticator: authenticator);
       SignInPage signInPage = SignInPage(tester: tester);
-    
+
       signInPage.expectUsername();
 
       // When I type my "username"
