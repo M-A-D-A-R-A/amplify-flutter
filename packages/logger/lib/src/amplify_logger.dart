@@ -1,18 +1,36 @@
-import 'dart:async';
+// Copyright 2022 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
-import 'package:ansicolor/ansicolor.dart';
-import 'package:aws_common/aws_common.dart';
+import 'dart:async';
 import 'package:logging/logging.dart';
+
+import '../amplify_logger.dart';
 
 enum Category { Analytics, API, Auth, Storage, DataStore }
 
 class AmplifyLogger {
   AmplifyLogger._(this._logger);
 
+  set logLevel(LogLevel logLevel) {
+    _logger.level = logLevel.level;
+  }
+
   static final Map<String, StreamSubscription<LogRecord>> _subscriptions = {};
   final Logger _logger;
 
-  factory AmplifyLogger() => AmplifyLogger._(Logger('Amplify'));
+  factory AmplifyLogger([String namespace = 'Amplify']) =>
+      AmplifyLogger._(Logger(namespace));
 
   factory AmplifyLogger.category(Category category) {
     return AmplifyLogger._(Logger('Amplify.${category.name}'));
@@ -26,8 +44,6 @@ class AmplifyLogger {
     _subscriptions[_logger.fullName] =
         _logger.onRecord.listen(plugin.handleLogRecord);
   }
-
-  void setLogLevel
 
   /// Log a message with a log level of [Level.FINER].
   void verbose(String message) {
@@ -57,66 +73,4 @@ class AmplifyLogger {
 
 abstract class AmplifyLoggerPlugin {
   void handleLogRecord(LogRecord record);
-}
-
-class AnsiPrettyPrinter implements AmplifyLoggerPlugin {
-  AnsiPrettyPrinter() {
-    ansiColorDisabled = false;
-  }
-
-  @override
-  void handleLogRecord(LogRecord record) {
-    final buffer = StringBuffer();
-
-    // Log Level
-    buffer.write(record.level.formattedString);
-
-    // Log Namespace
-    buffer.write(' ');
-
-    final namespace =
-        record.loggerName == 'Amplify' ? '' : record.loggerName.split('.')[1];
-    if (namespace.isNotEmpty) {
-      buffer.write(_formatLogNamespace(namespace));
-    }
-
-    // Log Message
-    buffer.write(' ');
-    buffer.write(record.message);
-
-    safePrint(buffer.toString());
-  }
-
-  String _formatLogNamespace(String? namespace) {
-    return (AnsiPen()
-      ..white(bold: true)
-      ..gray(level: .2, bg: true))(' $namespace ');
-  }
-}
-
-extension on Level {
-  String get formattedString {
-    if (this <= Level.FINER) {
-      return (AnsiPen()
-            ..white(bold: true)
-            ..gray(level: .8, bg: true))(' V ')
-          .toString();
-    } else if (this <= Level.FINE) {
-      return (AnsiPen()
-        ..white(bold: true)
-        ..gray(level: .6, bg: true))(' D ');
-    } else if (this <= Level.INFO) {
-      return (AnsiPen()
-        ..white(bold: true)
-        ..blue(bg: true))(' I ');
-    } else if (this <= Level.WARNING) {
-      return (AnsiPen()
-        ..white(bold: true)
-        ..yellow(bg: true))(' W ');
-    } else {
-      return (AnsiPen()
-        ..white(bold: true)
-        ..red(bg: true))(' E ');
-    }
-  }
 }

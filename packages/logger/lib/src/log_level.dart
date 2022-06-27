@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import 'package:ansicolor/ansicolor.dart';
+import 'package:logging/logging.dart';
 
 /// An enumeration of the different levels of logging.
 /// The levels are progressive, with lower-value items being lower priority
@@ -45,6 +46,22 @@ enum LogLevel implements Comparable<LogLevel> {
   bool operator >=(LogLevel value) => index >= value.index;
   bool operator <(LogLevel value) => index < value.index;
   bool operator <=(LogLevel value) => index <= value.index;
+
+  Level get level {
+    switch (this) {
+      case LogLevel.verbose:
+        return Level.FINEST;
+      case LogLevel.info:
+        return Level.INFO;
+      case LogLevel.warn:
+        return Level.WARNING;
+      case LogLevel.error:
+        return Level.SHOUT;
+      case LogLevel.none:
+        return Level.OFF;
+    }
+    return Level.ALL;
+  }
 
   /// Creates a formatted string based on the log level.
   String toFormattedString() {

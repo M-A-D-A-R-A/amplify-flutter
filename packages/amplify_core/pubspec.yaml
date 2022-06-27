@@ -10,12 +10,12 @@ dependencies:
   async: ^2.8.2
   aws_common: ^0.1.0
   aws_signature_v4: ^0.1.0
+  amplify_logger: ^0.1.0
   collection: ^1.15.0
   intl: ^0.17.0
   json_annotation: ^4.4.0
   meta: ^1.7.0
   uuid: ^3.0.1
-  amplify_logger: ^0.1.0
 
 dev_dependencies:
   amplify_lints:
