@@ -1,144 +1,122 @@
-// Copyright 2022 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 import 'dart:async';
 
-import 'package:amplify_core/amplify_core.dart';
 import 'package:ansicolor/ansicolor.dart';
 import 'package:aws_common/aws_common.dart';
+import 'package:logging/logging.dart';
 
-import 'log_event.dart';
-import 'log_level.dart';
+enum Category { Analytics, API, Auth, Storage, DataStore }
 
 class AmplifyLogger {
-  static final StreamController<LogEvent> _logStreamController =
-      StreamController<LogEvent>();
+  AmplifyLogger._(this._logger);
 
-  static final Sink<LogEvent> _logSink = _logStreamController.sink;
+  static final Map<String, StreamSubscription<LogRecord>> _subscriptions = {};
+  final Logger _logger;
 
-  /// A map of existing logger instances.
-  static final Map<String, AmplifyLogger> _logsMap = {};
+  factory AmplifyLogger() => AmplifyLogger._(Logger('Amplify'));
 
-  /// A stream of logs from all logger instances.
-  static final Stream<LogEvent> logStream = _logStreamController.stream;
-
-  /// Default logger instance without a namespace.
-  static get defaultLogger => getInstance();
-
-  LogLevel logLevel = LogLevel.info;
-  static LogLevel globalLogLevel = LogLevel.info;
-
-  static bool useDefaultLogHandler = true;
-
-  /// The namespace of the logger instance.
-  String get namespace {
-    return _namespace;
+  factory AmplifyLogger.category(Category category) {
+    return AmplifyLogger._(Logger('Amplify.${category.name}'));
   }
 
-  String _namespace;
-
-  AmplifyLogger({String namespace = 'default'}) : _namespace = namespace;
-
-  /// Log a message with an optional log level.
-  ///
-  /// The log level defaults to [LogLevel.info].
-  void log({
-    required String message,
-    LogLevel level = LogLevel.info,
-  }) {
-    if (level < logLevel) return;
-
-    final logEvent = LogEvent(
-      level: level,
-      namespace: namespace,
-      message: message,
-    );
-    _logSink.add(logEvent);
+  void registerPlugin(AmplifyLoggerPlugin plugin) {
+    final currentSubscription = _subscriptions.remove(_logger.fullName);
+    if (currentSubscription != null) {
+      unawaited(currentSubscription.cancel());
+    }
+    _subscriptions[_logger.fullName] =
+        _logger.onRecord.listen(plugin.handleLogRecord);
   }
 
-  /// Log a message with a log level of [LogLevel.verbose].
+  void setLogLevel
+
+  /// Log a message with a log level of [Level.FINER].
   void verbose(String message) {
-    log(message: message, level: LogLevel.verbose);
+    _logger.finer(message);
   }
 
-  /// Log a message with a log level of [LogLevel.debug].
+  /// Log a message with a log level of [Level.FINE].
   void debug(String message) {
-    log(message: message, level: LogLevel.debug);
+    _logger.fine(message);
   }
 
-  /// Log a message with a log level of [LogLevel.info].
+  /// Log a message with a log level of [Level.INFO].
   void info(String message) {
-    log(message: message, level: LogLevel.info);
+    _logger.info(message);
   }
 
-  /// Log a message with a log level of [LogLevel.warn].
+  /// Log a message with a log level of [Level.WARNING].
   void warn(String message) {
-    log(message: message, level: LogLevel.warn);
+    _logger.warning(message);
   }
 
-  /// Log a message with a log level of [LogLevel.error].
-  void error(String message) {
-    log(message: message, level: LogLevel.error);
+  /// Log a message with a log level of [Level.SEVERE].
+  void error(String message, [Object? error, StackTrace? stackTrace]) {
+    _logger.severe(message, error, stackTrace);
   }
+}
 
-  /// Get or create a logger instance.
-  ///
-  /// If no instance exists with the given namespace, a new
-  /// instance will be created.
-  static AmplifyLogger getInstance({String namespace = 'default'}) {
-    return _logsMap[namespace] ??= AmplifyLogger(namespace: namespace);
-  }
+abstract class AmplifyLoggerPlugin {
+  void handleLogRecord(LogRecord record);
+}
 
-  static AmplifyLogger getCategoryInstance({required Category category}) {
-    return getInstance(namespace: category.toString());
-  }
-
-  /// Initialize the logger by listening to the log stream.
-  static void initDefaultLogHandler() {
+class AnsiPrettyPrinter implements AmplifyLoggerPlugin {
+  AnsiPrettyPrinter() {
     ansiColorDisabled = false;
-
-    logStream
-        .where((event) => event.level >= globalLogLevel)
-        .listen((logEvent) {
-      if (useDefaultLogHandler) _printLog(logEvent);
-    });
   }
 
-  static void _printLog(LogEvent logEvent) {
-    StringBuffer buffer = StringBuffer();
+  @override
+  void handleLogRecord(LogRecord record) {
+    final buffer = StringBuffer();
 
     // Log Level
-    buffer.write(logEvent.level.toFormattedString());
+    buffer.write(record.level.formattedString);
 
     // Log Namespace
     buffer.write(' ');
 
-    String? namespace = logEvent.namespace;
-    buffer.write(_formatLogNamespace(namespace));
+    final namespace =
+        record.loggerName == 'Amplify' ? '' : record.loggerName.split('.')[1];
+    if (namespace.isNotEmpty) {
+      buffer.write(_formatLogNamespace(namespace));
+    }
 
     // Log Message
     buffer.write(' ');
-    buffer.write(logEvent.message);
+    buffer.write(record.message);
 
     safePrint(buffer.toString());
   }
 
-  static String _formatLogNamespace(String? namespace) {
-    if (namespace == null) return '';
-
+  String _formatLogNamespace(String? namespace) {
     return (AnsiPen()
       ..white(bold: true)
-      ..gray(level: .2, bg: true))(' ' + namespace + ' ');
+      ..gray(level: .2, bg: true))(' $namespace ');
+  }
+}
+
+extension on Level {
+  String get formattedString {
+    if (this <= Level.FINER) {
+      return (AnsiPen()
+            ..white(bold: true)
+            ..gray(level: .8, bg: true))(' V ')
+          .toString();
+    } else if (this <= Level.FINE) {
+      return (AnsiPen()
+        ..white(bold: true)
+        ..gray(level: .6, bg: true))(' D ');
+    } else if (this <= Level.INFO) {
+      return (AnsiPen()
+        ..white(bold: true)
+        ..blue(bg: true))(' I ');
+    } else if (this <= Level.WARNING) {
+      return (AnsiPen()
+        ..white(bold: true)
+        ..yellow(bg: true))(' W ');
+    } else {
+      return (AnsiPen()
+        ..white(bold: true)
+        ..red(bg: true))(' E ');
+    }
   }
 }

@@ -10,3 +10,4 @@ dependencies:
   ansicolor: ^2.0.1
   aws_common: ^0.1.0
   amplify_core: 0.5.0
+  logging: ^1.0.2

@@ -15,6 +15,7 @@ dependencies:
   json_annotation: ^4.4.0
   meta: ^1.7.0
   uuid: ^3.0.1
+  amplify_logger: ^0.1.0
 
 dev_dependencies:
   amplify_lints:

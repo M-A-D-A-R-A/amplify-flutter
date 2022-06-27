@@ -103,6 +103,8 @@ abstract class AmplifyClass {
       );
     }
 
+    AmplifyLogger.initDefaultLogHandler();
+
     await configurePlatform(configuration);
     _configCompleter.complete(amplifyConfig);
   }
